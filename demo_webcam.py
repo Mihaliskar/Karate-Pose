@@ -16,36 +16,19 @@ from torch.utils.data import DataLoader
 os.environ['PYOPENGL_PLATFORM'] = 'egl'
 #os.environ["DISPLAY"] = ":0"e
 sys.path.append('')
-'''
-import scipy.signal as signal
-from scipy.ndimage.filters import gaussian_filter1d
 
-def smooth_bbox_params(bbox_params, kernel_size=11, sigma=8):
-    """
-    Applies median filtering and then gaussian filtering to bounding box
-    parameters.
 
-    Args:
-        bbox_params (torch.Tensor or np.ndarray): Shape (N, 4) with [x1, y1, x2, y2].
-        kernel_size (int): Kernel size for median filtering (must be odd).
-        sigma (float): Sigma for gaussian smoothing.
+"""
+Check if a path exists
+"""
+def checkIfPathIsDirectory(filename):
+    if (filename is None):  
+       return False
+    return os.path.isdir(filename) 
 
-    Returns:
-        torch.Tensor: Smoothed bounding box parameters (N, 4).
-    """
-    if isinstance(bbox_params, torch.Tensor):
-        bbox_params = bbox_params.cpu().numpy()  # Convert to NumPy for processing
-
-    # Ensure we have at least kernel_size elements to avoid zero-padding warning
-    if bbox_params.shape[0] < kernel_size:
-        kernel_size = max(1, bbox_params.shape[0] // 2 * 2 + 1)  # Keep kernel size odd
-
-    # Apply median and Gaussian filtering
-    smoothed = np.array([signal.medfilt(param, kernel_size) for param in bbox_params.T]).T
-    smoothed = np.array([gaussian_filter1d(traj, sigma) for traj in smoothed.T]).T
-
-    return torch.tensor(smoothed, dtype=torch.float32, device='cpu') 
-'''
+"""
+Easy way to switch inputs
+"""
 def getCaptureDeviceFromPath(videoFilePath,videoWidth,videoHeight,videoFramerate=30):
   #------------------------------------------
   if (videoFilePath=="esp"):
@@ -75,7 +58,6 @@ def getCaptureDeviceFromPath(videoFilePath,videoWidth,videoHeight,videoFramerate
      cap.set(cv2.CAP_PROP_FRAME_WIDTH, videoWidth)
      cap.set(cv2.CAP_PROP_FRAME_HEIGHT, videoHeight)
   else:
-     from tools import checkIfPathIsDirectory
      if (checkIfPathIsDirectory(videoFilePath) and (not "/dev/" in videoFilePath) ):
         from folderStream import FolderStreamer
         cap = FolderStreamer(path=videoFilePath,width=videoWidth,height=videoHeight)
@@ -83,11 +65,9 @@ def getCaptureDeviceFromPath(videoFilePath,videoWidth,videoHeight,videoFramerate
         cap = cv2.VideoCapture(videoFilePath)
   return cap 
 
-
-
-
-
-
+"""
+Select joints that we want from SMPL skeleton
+"""
 def get_smpl_skeleton():
      return np.array(
                                 [
@@ -140,7 +120,7 @@ def get_colors():
 
 
 
-def vis_matlab(hmr_output):
+def save_matlab_visualization(hmr_output,output_filename="skeleton.png"):
     from matplotlib import pyplot as plt
                        
     joints     = hmr_output['joints3d'].cpu().numpy()
@@ -148,7 +128,6 @@ def vis_matlab(hmr_output):
     camera_translation = hmr_output['pred_cam_t'].cpu().numpy() * 0.5 
     ax = None
 
-                        
     radius =1
     skeleton = get_smpl_skeleton()
     #joints = joints[:len(skeleton)+1]
@@ -183,9 +162,43 @@ def vis_matlab(hmr_output):
     ax.view_init(-90, -90)
     if ax is None:
                             plt.show()
-    plt.savefig('skeleton.png')
-    #import ipdb; ipdb.set_trace()
+    plt.savefig(output_filename)
 
+
+def encode_smpl_skeleton_to_dict(hmr_output): 
+    # Extract the first sample in the batch and take the first 22 SMPL joints
+    joints_3d = hmr_output['joints3d'][0, :22, :]
+
+    # Convert to numpy if needed
+    if isinstance(joints_3d, torch.Tensor):
+        joints_3d = joints_3d.cpu().numpy()
+
+    SMPL_JOINT_NAMES = [
+    "pelvis", "left_hip", "right_hip", "spine1", "left_knee", "right_knee",
+    "spine2", "left_ankle", "right_ankle", "spine3", "left_foot", "right_foot",
+    "neck", "left_collar", "right_collar", "head", "left_shoulder",
+    "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist"]
+
+    # Encode as a dictionary
+    joints_dict = {SMPL_JOINT_NAMES[i]: joints_3d[i].tolist() for i in range(joints_3d.shape[0])}
+
+    return joints_dict
+
+
+
+def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
+    import json
+    # Ensure the output directory exists
+    directoryPath = os.path.dirname(output_filename)
+  
+    if (directoryPath!=""):
+       os.makedirs(directoryPath, exist_ok=True)
+
+    # Save as pretty-printed JSON
+    with open(output_filename, "w") as f:
+        json.dump(skeleton_dict, f, indent=4)
+
+    print(f"[INFO] Skeleton saved to {output_filename}")
 
 
 def main(args):
@@ -262,8 +275,17 @@ def main(args):
                     if len(detection[0]) > 0:
 
                         hmr_output=tester.run_on_single_image_tensor(frame, detection)
+                        #---------------------------------------------------------------------------------------
+                        #At this point hmr_output has the resolved pose data..!
+                        #---------------------------------------------------------------------------------------
+                        
+                        pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
+ 
+                        #We can dump the skeleton to disk as skeleton_00000.json etc.
+                        save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
 
-                        vis_matlab(hmr_output)
+                        #Uncomment to also do a matlab visualization
+                        #save_matlab_visualization(hmr_output,output_filename="skeleton_%05u.png" % frameNumber)
                     else:
                         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                         cv2.imshow('front', frame)
