@@ -388,8 +388,12 @@ def main(args):
             while True:
                 frameNumber+=1
                 if True:#frameNumber%2==0:
-                    ret, frame = cap.read()          
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    try:
+                      ret, frame = cap.read()          
+                      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    except Exception as e:
+                      print("Error opening image",e)
+                      break
 
                     input_tensor = torch.tensor(frame).permute(2, 0, 1).unsqueeze(0) / 255.0
                     detection    = mot.detector(input_tensor.cuda())
