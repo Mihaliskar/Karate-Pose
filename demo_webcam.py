@@ -185,6 +185,65 @@ def encode_smpl_skeleton_to_dict(hmr_output):
     return joints_dict
 
 
+def encode_smplx_skeleton_to_dict(hmr_output): 
+    # --- Extract body joints ---
+    joints_body = hmr_output['joints3d'][0]  # shape (22, 3)
+
+    if isinstance(joints_body, torch.Tensor):
+        joints_body = joints_body.cpu().numpy()
+
+    SMPL_JOINT_NAMES = [
+        "pelvis", "left_hip", "right_hip", "spine1", "left_knee", "right_knee",
+        "spine2", "left_ankle", "right_ankle", "spine3", "left_foot", "right_foot",
+        "neck", "left_collar", "right_collar", "head", "left_shoulder",
+        "right_shoulder", "left_elbow", "right_elbow", "left_wrist", "right_wrist"
+    ]
+
+    joints_dict = {SMPL_JOINT_NAMES[i]: joints_body[i].tolist() for i in range(joints_body.shape[0])}
+
+    # --- Hand joint names based on MANO/SMPL-X ---
+    HAND_JOINT_NAMES = [
+        'wrist',
+        'thumb1', 'thumb2', 'thumb3', 'thumb4',
+        'index1', 'index2', 'index3', 'index4',
+        'middle1', 'middle2', 'middle3', 'middle4',
+        'ring1', 'ring2', 'ring3', 'ring4',
+        'pinky1', 'pinky2', 'pinky3', 'pinky4'
+    ]
+
+    # --- Add hands ---
+    for side in ['left', 'right']:
+        hand_key_3d = f"{side}_hand_3d"
+        if hand_key_3d in hmr_output:
+            hand_joints = hmr_output[hand_key_3d][0]  # shape (15, 3) or 21?
+            if isinstance(hand_joints, torch.Tensor):
+                hand_joints = hand_joints.cpu().numpy()
+            
+            # If hand has fewer joints than HAND_JOINT_NAMES, truncate names
+            names_to_use = HAND_JOINT_NAMES[:hand_joints.shape[0]]
+            for name, joint in zip(names_to_use, hand_joints):
+                joints_dict[f"{side}_hand_{name}"] = joint.tolist()
+
+    # --- Head joint names (facial landmarks) ---
+    HEAD_JOINT_NAMES = [
+        'jaw', 'mouth_left', 'mouth_right', 'mouth_top', 'mouth_bottom',
+        'nose', 'left_eye', 'right_eye', 'left_eyebrow', 'right_eyebrow'
+    ]
+    # If more joints are available, just number them
+    if 'head_3d' in hmr_output:
+        head_joints = hmr_output['head_3d'][0]
+        if isinstance(head_joints, torch.Tensor):
+            head_joints = head_joints.cpu().numpy()
+        
+        for i, joint in enumerate(head_joints):
+            if i < len(HEAD_JOINT_NAMES):
+                joints_dict[f"head_{HEAD_JOINT_NAMES[i]}"] = joint.tolist()
+            else:
+                joints_dict[f"head_extra_{i}"] = joint.tolist()
+
+    return joints_dict
+
+
 
 def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
     import json
@@ -199,6 +258,53 @@ def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
         json.dump(skeleton_dict, f, indent=4)
 
     print(f"[INFO] Skeleton saved to {output_filename}")
+
+
+def smpl_to_32joints(hmr_output):
+    """
+    Converts SMPL (22x3) joints from hmr_output to a 32-joint skeleton format.
+
+    Args:
+        hmr_output (dict): Contains 'joints3d' tensor of shape (B, 22, 3)
+
+    Returns:
+        np.ndarray: Array of shape (32, 3)
+    """
+    # Extract 22 joints
+    joints_22 = hmr_output['joints3d'][0, :22, :]
+    if isinstance(joints_22, torch.Tensor):
+        joints_22 = joints_22.cpu().numpy()
+
+    # Initialize 32-joint array
+    joints_32 = np.zeros((32, 3))
+
+    # Basic mapping (fill directly from SMPL)
+    mapping = {
+        0: 0,  1: 3,  2: 6,  3: 9,  4: 12,
+        5: 13, 6: 14, 7: 16, 8: 18, 9: 20,
+        10: 17, 11: 19, 12: 21,
+        15: 1, 16: 2, 17: 4, 18: 5,
+        19: 7, 20: 8, 21: 10, 22: 11,
+        23: 15
+    }
+
+    for target, source in mapping.items():
+        joints_32[target] = joints_22[source]
+
+    # Estimate head top (24) by extending the neck-head vector
+    neck = joints_32[4]
+    head = joints_32[23]
+    joints_32[24] = head + 0.25 * (head - neck)
+
+    # Duplicate hands (13, 14)
+    joints_32[13] = joints_32[9]
+    joints_32[14] = joints_32[12]
+
+    # Fill remaining joints (25–31) as small variations or copies of nearby points
+    for i in range(25, 32):
+        joints_32[i] = joints_32[24]  # could be refined if you have dataset definitions
+
+    return joints_32
 
 
 def main(args):
@@ -279,7 +385,8 @@ def main(args):
                         #At this point hmr_output has the resolved pose data..!
                         #---------------------------------------------------------------------------------------
                         
-                        pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
+                        #pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
+                        pose3DAsDictionary = encode_smplx_skeleton_to_dict(hmr_output)
  
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
                         save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
