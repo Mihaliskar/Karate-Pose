@@ -216,7 +216,7 @@ class Tester:
         #renderer.delete()
         
     @torch.no_grad()
-    def run_on_single_image_tensor(self, image_tensor, detections,render=True):
+    def run_on_single_image_tensor(self, image_tensor, detections,render=True,save=None):
         dets = detections
 
         # Load the image tensor and get its dimensions
@@ -285,8 +285,12 @@ class Tester:
         if render:
             front_view = self.renderer.render_front_view(pred_vertices_array, bg_img_rgb=img.copy())
             cv2.imshow('front', front_view[:, :, ::-1])
+            if (save is not None):
+                cv2.imwrite(save, front_view[:, :, ::-1])
         else:
             cv2.imshow('front', img[:, :, ::-1])
+            if (save is not None):
+                cv2.imwrite(save, img[:, :, ::-1])
             
         #cv2.imshow('front', img[:, :, ::-1])
         return hmr_output

@@ -165,6 +165,42 @@ def save_matlab_visualization(hmr_output,output_filename="skeleton.png"):
     plt.savefig(output_filename)
 
 
+def saveCSVFileFromListOfDicts(filename,inputDicts):
+    labels = list()
+    #--------------------------
+    for frame in inputDicts:
+      for label in frame.keys():
+        if not label in labels: 
+           labels.append(label)
+    #--------------------------   
+    f = open(filename, 'w')
+    #Write header..
+    #------------------------------------------------------------------------  
+    for column in range(len(labels)):
+      if (column>0):
+        f.write(',')
+      f.write("%s_3DX,"%(labels[column]))
+      f.write("%s_3DY,"%(labels[column]))
+      f.write("%s_3DZ" %(labels[column]))
+    f.write('\n')
+    #------------------------------------------------------------------------  
+    #Write body..
+    #------------------------------------------------------------------------ 
+    for frame in inputDicts: 
+     for column in range(len(labels)):
+      if (column>0):
+        f.write(',')
+      if (labels[column] in frame):
+         f.write("%f,"%(frame[labels[column]][0]))
+         f.write("%f,"%(frame[labels[column]][1]))
+         f.write("%f" %(frame[labels[column]][2]))
+      else:
+         f.write("0")
+     f.write('\n')
+    #------------------------------------------------------------------------  
+    f.close()
+
+
 def encode_smpl_skeleton_to_dict(hmr_output): 
     # Extract the first sample in the batch and take the first 22 SMPL joints
     joints_3d = hmr_output['joints3d'][0, :22, :]
@@ -326,7 +362,9 @@ def main(args):
         beta=0.4,
     )
 
-    tester = Tester(args)
+    tester  = Tester(args)
+    history = list()
+
     if True:
         all_image_folder = [input_image_folder]
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
@@ -380,26 +418,40 @@ def main(args):
                     detection = mot.prepare_output_detections(detections)
                     if len(detection[0]) > 0:
 
-                        hmr_output=tester.run_on_single_image_tensor(frame, detection)
+                        saveFilename = None
+                        if (args.save):
+                           saveFilename = 'colorFrame_0_%05d.jpg' % frameNumber
+
+                        hmr_output=tester.run_on_single_image_tensor(frame, detection, save=saveFilename)
                         #---------------------------------------------------------------------------------------
                         #At this point hmr_output has the resolved pose data..!
                         #---------------------------------------------------------------------------------------
                         
                         #pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
                         pose3DAsDictionary = encode_smplx_skeleton_to_dict(hmr_output)
+
+                        history.append(pose3DAsDictionary)
  
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
-                        save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
+                        if (args.save):
+                           save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
 
                         #Uncomment to also do a matlab visualization
                         #save_matlab_visualization(hmr_output,output_filename="skeleton_%05u.png" % frameNumber)
                     else:
                         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                         cv2.imshow('front', frame)
+                        if (args.save):
+                           saveFilename = 'colorFrame_0_%05d.jpg' % frameNumber
+                           cv2.imwrite(saveFilename, frame)
+                        
 
                     if cv2.waitKey(1) & 0xFF == ord('q'):
                         break
 
+    saveCSVFileFromListOfDicts("3DPoints.csv",history)
+    if (args.save):
+        os.system("ffmpeg -framerate %u -start_number 1 -i colorFrame_0_%%05d.jpg -s %ux%u  -y -r %u -pix_fmt yuv420p -threads 8 livelastRun3DHiRes.mp4 && rm colorFrame_0_*.jpg " % (videoFramerate,videoWidth,videoHeight,videoFramerate)) # 
     del tester.model
 
     logger.info('================= END =================')
@@ -407,6 +459,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+
+
+    parser.add_argument('--save', help='Save .json / visualization output', action=argparse.BooleanOptionalAction)
 
     parser.add_argument('--input', type=str, default='/dev/video0',
                         help='From Device (path to files, videos , /dev/videoX or screen )')
