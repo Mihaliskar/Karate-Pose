@@ -1,6 +1,6 @@
 
 def get_azure_kinect_skeleton():
-skeleton = [
+ skeleton = [
     "pelvis",          # 0
     "spine1",          # 1
     "spine2",          # 2
@@ -34,7 +34,7 @@ skeleton = [
     "left_eye",        # 30
     "head_top"         # 31
 ]
-return skeleton
+ return skeleton
 
 
 """
