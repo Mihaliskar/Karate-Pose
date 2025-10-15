@@ -146,6 +146,8 @@ def encode_smplx_skeleton_to_dict(hmr_output):
 
     if isinstance(joints_body, torch.Tensor):
         joints_body = joints_body.cpu().numpy()
+   
+    #Documentation: https://github.com/open-mmlab/mmhuman3d/issues/149
 
     SMPL_JOINT_NAMES = [
         "pelvis", "left_hip", "right_hip", "spine1", "left_knee", "right_knee",
@@ -193,6 +195,10 @@ def encode_smplx_skeleton_to_dict(hmr_output):
         for i, joint in enumerate(head_joints):
             if i < len(HEAD_JOINT_NAMES):
                 joints_dict[f"head_{HEAD_JOINT_NAMES[i]}"] = joint.tolist()
+            elif i == 58:
+                joints_dict[f"head_right_ear"] = joint.tolist()
+            elif i == 59:
+                joints_dict[f"head_left_ear"] = joint.tolist()
             else:
                 joints_dict[f"head_extra_{i}"] = joint.tolist()
 

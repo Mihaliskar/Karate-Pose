@@ -1,38 +1,43 @@
 
 def get_azure_kinect_skeleton():
  skeleton = [
-    "pelvis",          # 0
-    "spine1",          # 1
-    "spine2",          # 2
-    "spine3",          # 3
-    "neck",            # 4
-    "head",            # 5
-    "right_clavicle",  # 6
-    "right_shoulder",  # 7
-    "right_elbow",     # 8
-    "right_wrist",     # 9
-    "right_hand",      # 10
-    "left_clavicle",   # 11
-    "left_shoulder",   # 12
-    "left_elbow",      # 13
-    "left_wrist",      # 14
-    "left_hand",       # 15
-    "left_hand_tip",   # 16
-    "right_hand_tip",  # 17
-    "spine4",          # 18
-    "right_hip",       # 19
-    "right_knee",      # 20
-    "right_ankle",     # 21
-    "left_hip",        # 22
-    "left_knee",       # 23
-    "left_ankle",      # 24
-    "left_foot",       # 25
-    "right_foot",      # 26
-    "jaw",             # 27
-    "nose",            # 28
-    "right_eye",       # 29
-    "left_eye",        # 30
-    "head_top"         # 31
+    "pelvis",             # 0
+    "spine1",             # 1
+    "spine2",             # 2
+    "neck",               # 3
+
+    "left_collar",        # 4
+    "left_shoulder",      # 5
+    "left_elbow",         # 6
+    "left_wrist",         # 7
+    "left_hand_middle1",  # 8
+    "left_hand_middle4",  # 9
+    "left_hand_thumb4",   # 10
+
+    "right_collar",       # 11
+    "right_shoulder",     # 12
+    "right_elbow",        # 13
+    "right_wrist",        # 14
+    "right_hand_middle1", # 15
+    "right_hand_middle4", # 16
+    "right_hand_thumb4",  # 17
+
+    "left_hip",           # 18
+    "left_knee",          # 19
+    "left_ankle",         # 20
+    "left_foot",          # 21
+
+    "right_hip",          # 22
+    "right_knee",         # 23
+    "right_ankle",        # 24
+    "right_foot",         # 25
+
+    "head_jaw",           # 26
+    "head",               # 27
+    "head_left_eye",      # 28
+    "head_left_ear",      # 29
+    "head_right_eye",     # 30
+    "head_right_ear"      # 31
 ]
  return skeleton
 
