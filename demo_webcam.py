@@ -349,6 +349,7 @@ def main(args):
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
                         if (args.save):
                            save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
+                           del hmr_output['vertices'] # <- Remove this because it is really big
                            save_raw_dict_to_json(hmr_output,output_filename="raw_%05u.json" % frameNumber)
 
                         #Uncomment to also do a matlab visualization
