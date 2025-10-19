@@ -83,18 +83,18 @@ class SMPLXCamHead(nn.Module):
         )
 
         all_joints = smpl_output.joints  # shape (B, ~118, 3)
-        vertices = smpl_output.vertices  # shape (B, N, 3)
+        vertices   = smpl_output.vertices  # shape (B, N, 3)
 
         # --- Split into subsets ---
         # These index ranges are based on standard SMPL-X ordering
-        joints_body = all_joints[:, :22, :]
-        joints_left_hand = all_joints[:, 22:37, :]
+        joints_body       = all_joints[:, :22, :]
+        joints_left_hand  = all_joints[:, 22:37, :]
         joints_right_hand = all_joints[:, 37:52, :]
-        joints_head = all_joints[:, 52:, :]  # face/eyes/jaw region
+        joints_head       = all_joints[:, 52:, :]  # face/eyes/jaw region
 
         # --- Camera projection setup ---
         batch_size = all_joints.shape[0]
-        device = all_joints.device
+        device     = all_joints.device
 
         cam_t = convert_pare_to_full_img_cam(
             pare_cam=cam,
@@ -136,10 +136,10 @@ class SMPLXCamHead(nn.Module):
         )
 
         if normalize_joints2d:
-            joints2d_body = joints2d_body / (self.img_res / 2.)
-            joints2d_left_hand = joints2d_left_hand / (self.img_res / 2.)
+            joints2d_body       = joints2d_body / (self.img_res / 2.)
+            joints2d_left_hand  = joints2d_left_hand / (self.img_res / 2.)
             joints2d_right_hand = joints2d_right_hand / (self.img_res / 2.)
-            joints2d_head = joints2d_head / (self.img_res / 2.)
+            joints2d_head       = joints2d_head / (self.img_res / 2.)
 
         # --- Prepare output dict ---
         output = {
@@ -169,8 +169,6 @@ class SMPLXCamHead(nn.Module):
 
 
 
-
-
 def perspective_projection(points, rotation, translation, cam_intrinsics):
 
     K = cam_intrinsics
@@ -179,6 +177,7 @@ def perspective_projection(points, rotation, translation, cam_intrinsics):
     projected_points = points / points[:, :, -1].unsqueeze(-1)
     projected_points = torch.einsum('bij,bkj->bki', K, projected_points.float())
     return projected_points[:, :, :-1]
+
 
 
 def convert_pare_to_full_img_cam(

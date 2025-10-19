@@ -221,6 +221,36 @@ def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
     print(f"[INFO] Skeleton saved to {output_filename}")
 
 
+def to_json_serializable(obj):
+    if isinstance(obj, torch.Tensor):
+        return obj.detach().cpu().tolist()
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: to_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [to_json_serializable(v) for v in obj]
+    else:
+        return obj
+
+
+def save_raw_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
+    import json
+
+
+    skeleton_dict = to_json_serializable(skeleton_dict)
+    # Ensure the output directory exists
+    directoryPath = os.path.dirname(output_filename)
+  
+    if (directoryPath!=""):
+       os.makedirs(directoryPath, exist_ok=True)
+
+    # Save as pretty-printed JSON
+    with open(output_filename, "w") as f:
+        json.dump(skeleton_dict, f, indent=4)
+
+    print(f"[INFO] Skeleton saved to {output_filename}")
+
 
 
 def main(args):
@@ -319,6 +349,7 @@ def main(args):
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
                         if (args.save):
                            save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
+                           save_raw_dict_to_json(hmr_output,output_filename="raw_%05u.json" % frameNumber)
 
                         #Uncomment to also do a matlab visualization
                         #save_matlab_visualization(hmr_output,output_filename="skeleton_%05u.png" % frameNumber)
