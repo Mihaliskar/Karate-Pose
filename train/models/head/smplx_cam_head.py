@@ -157,6 +157,12 @@ class SMPLXCamHead(nn.Module):
             'left_hand_2d': joints2d_left_hand,
             'right_hand_2d': joints2d_right_hand,
             'head_2d': joints2d_head,
+
+            # added outputs
+            'smpl_shape': shape,                 # (B, num_betas)
+            'smpl_pose_rotmat': rotmat,          # (B, 22, 3, 3)
+            'smpl_global_orient': rotmat[:, 0],  # (B, 3, 3)
+            'smpl_body_pose': rotmat[:, 1:22],   # (B, 21, 3, 3)
         }
 
         return output
