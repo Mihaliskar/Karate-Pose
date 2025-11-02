@@ -10,7 +10,7 @@ class SMPLX(SMPLX_):
     def forward(self, *args, **kwargs):
         smplx_output = super(SMPLX, self).forward(*args, **kwargs)
 
-        print("Forward ",smplx_output.body_pose)
+        #print("Forward ",smplx_output.body_pose)
         output = SMPLXOutput(vertices=smplx_output.vertices,
                              global_orient=smplx_output.global_orient,
                              body_pose=smplx_output.body_pose,
