@@ -251,6 +251,53 @@ def save_raw_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
 
     print(f"[INFO] Skeleton saved to {output_filename}")
 
+def scale_and_embed_frame(frame, target_w=1280, target_h=720):
+    """
+    Resize + embed a frame into a fixed 1280x720 canvas
+    while keeping aspect ratio (letterbox padding).
+
+    Returns:
+        embedded_rgb  - final 720p RGB frame
+        scale_x, scale_y - scaling factors applied
+        pad_x,   pad_y   - padding applied (useful for remapping detections)
+    """
+    h, w = frame.shape[:2]
+
+    # Compute scale to fit inside (1280x720)
+    scale = min(target_w / w, target_h / h)
+    new_w = int(w * scale)
+    new_h = int(h * scale)
+
+    # Resize using that scale
+    resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+
+    # Compute padding amounts
+    pad_x = (target_w - new_w) // 2
+    pad_y = (target_h - new_h) // 2
+
+    # Create canvas and embed resized frame centered
+    embedded = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+    embedded[pad_y:pad_y + new_h, pad_x:pad_x + new_w] = resized
+
+    return embedded, scale, pad_x, pad_y
+
+def rotate_frame_90(frame, clockwise=True):
+    """
+    Rotate an image by 90 degrees.
+
+    Args:
+        frame: input HxWxC image
+        clockwise: True = rotate 90° CW, False = rotate 90° CCW
+
+    Returns:
+        rotated_frame: rotated image (HxWxC)
+    """
+    if clockwise:
+        # 90° clockwise = transpose then flip horizontally
+        return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    else:
+        # 90° counter-clockwise
+        return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 
 def main(args):
@@ -304,6 +351,9 @@ def main(args):
                     except Exception as e:
                       print("Error opening image",e)
                       break
+  
+                    #frame = rotate_frame_90(frame)
+                    #frame, scale, pad_x, pad_y = scale_and_embed_frame(frame)
 
                     input_tensor = torch.tensor(frame).permute(2, 0, 1).unsqueeze(0) / 255.0
                     detection    = mot.detector(input_tensor.cuda())
