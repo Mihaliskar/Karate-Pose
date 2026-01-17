@@ -278,10 +278,12 @@ def main(args):
     if True:
         all_image_folder = [input_image_folder]
         device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+        #device = torch.device('cpu') #<-force CPU
         torch.set_float32_matmul_precision('medium')
         with torch.cuda.amp.autocast(), torch.no_grad():
             mot = MPT(
-                device=torch.device('cuda'),
+                device=torch.device('cuda'), #<-Cpu?
                 batch_size=4,
                 display=False,
                 detector_type='yolo',
