@@ -209,6 +209,7 @@ def encode_smplx_skeleton_to_dict(hmr_output):
 def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
     import json
     # Ensure the output directory exists
+    
     directoryPath = os.path.dirname(output_filename)
   
     if (directoryPath!=""):
@@ -218,7 +219,7 @@ def save_skeleton_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
     with open(output_filename, "w") as f:
         json.dump(skeleton_dict, f, indent=4)
 
-    print(f"[INFO] Skeleton saved to {output_filename}")
+    #print(f"[INFO] Skeleton saved to {output_filename}")
 
 
 def to_json_serializable(obj):
@@ -249,62 +250,18 @@ def save_raw_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
     with open(output_filename, "w") as f:
         json.dump(skeleton_dict, f, indent=4)
 
-    print(f"[INFO] Skeleton saved to {output_filename}")
+    #print(f"[INFO] Skeleton saved to {output_filename}")
 
-def scale_and_embed_frame(frame, target_w=1280, target_h=720):
-    """
-    Resize + embed a frame into a fixed 1280x720 canvas
-    while keeping aspect ratio (letterbox padding).
-
-    Returns:
-        embedded_rgb  - final 720p RGB frame
-        scale_x, scale_y - scaling factors applied
-        pad_x,   pad_y   - padding applied (useful for remapping detections)
-    """
-    h, w = frame.shape[:2]
-
-    # Compute scale to fit inside (1280x720)
-    scale = min(target_w / w, target_h / h)
-    new_w = int(w * scale)
-    new_h = int(h * scale)
-
-    # Resize using that scale
-    resized = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
-
-    # Compute padding amounts
-    pad_x = (target_w - new_w) // 2
-    pad_y = (target_h - new_h) // 2
-
-    # Create canvas and embed resized frame centered
-    embedded = np.zeros((target_h, target_w, 3), dtype=np.uint8)
-    embedded[pad_y:pad_y + new_h, pad_x:pad_x + new_w] = resized
-
-    return embedded, scale, pad_x, pad_y
-
-def rotate_frame_90(frame, clockwise=True):
-    """
-    Rotate an image by 90 degrees.
-
-    Args:
-        frame: input HxWxC image
-        clockwise: True = rotate 90° CW, False = rotate 90° CCW
-
-    Returns:
-        rotated_frame: rotated image (HxWxC)
-    """
-    if clockwise:
-        # 90° clockwise = transpose then flip horizontally
-        return cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-    else:
-        # 90° counter-clockwise
-        return cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
 
 def main(args):
 
     input_image_folder = args.image_folder
     output_path        = args.output_folder
-    #os.makedirs(output_path, exist_ok=True)
+    result_path        = args.result_folder
+    input_folder_name = os.path.basename(os.path.normpath(args.input))
+    output = os.path.join(result_path, input_folder_name)
+    os.makedirs(output, exist_ok=True)
 
     logger.add(
         os.path.join(output_path, 'demo.log'),
@@ -353,9 +310,6 @@ def main(args):
                     except Exception as e:
                       print("Error opening image",e)
                       break
-  
-                    #frame = rotate_frame_90(frame)
-                    #frame, scale, pad_x, pad_y = scale_and_embed_frame(frame)
 
                     input_tensor = torch.tensor(frame).permute(2, 0, 1).unsqueeze(0) / 255.0
                     detection    = mot.detector(input_tensor.cuda())
@@ -387,6 +341,9 @@ def main(args):
                         saveFilename = None
                         if (args.save):
                            saveFilename = 'colorFrame_0_%05d.jpg' % frameNumber
+                           colorframes = os.path.join(output, "colorframes")
+                           os.makedirs(colorframes, exist_ok=True)
+                           saveFilename = os.path.join(colorframes, saveFilename)
 
                         hmr_output=tester.run_on_single_image_tensor(frame, detection, save=saveFilename)
                         #---------------------------------------------------------------------------------------
@@ -399,18 +356,26 @@ def main(args):
                         history.append(pose3DAsDictionary)
  
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
+                        skeletons = os.path.join(output, "skeletons")
+                        os.makedirs(colorframes, exist_ok=True)
+                        raw = os.path.join(output, "raw")
+                        os.makedirs(colorframes, exist_ok=True)
                         if (args.save):
-                           save_skeleton_dict_to_json(pose3DAsDictionary,output_filename="skeleton_%05u.json" % frameNumber)
+                           save_skeleton_dict_to_json(pose3DAsDictionary,output_filename=os.path.join(skeletons, "skeleton_%05u.json" % frameNumber))
                            del hmr_output['vertices'] # <- Remove this because it is really big
-                           save_raw_dict_to_json(hmr_output,output_filename="raw_%05u.json" % frameNumber)
+                           save_raw_dict_to_json(hmr_output,output_filename=os.path.join(raw, "raw_%05u.json" % frameNumber))
 
                         #Uncomment to also do a matlab visualization
                         #save_matlab_visualization(hmr_output,output_filename="skeleton_%05u.png" % frameNumber)
                     else:
                         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                         cv2.imshow('front', frame)
+                        saveFilename = None
                         if (args.save):
                            saveFilename = 'colorFrame_0_%05d.jpg' % frameNumber
+                           colorframes = os.path.join(output, "colorframes")
+                           os.makedirs(colorframes, exist_ok=True)
+                           saveFilename = os.path.join(colorframes, saveFilename)
                            cv2.imwrite(saveFilename, frame)
                         
 
@@ -432,6 +397,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--save', help='Save .json / visualization output', action=argparse.BooleanOptionalAction)
 
+    parser.add_argument('--result_folder', type=str, default='output/results',
+                        help='output folder to write results')
+
     parser.add_argument('--input', type=str, default='/dev/video0',
                         help='From Device (path to files, videos , /dev/videoX or screen )')
 
@@ -445,7 +413,7 @@ if __name__ == '__main__':
                         help='input image folder')
 
     parser.add_argument('--output_folder', type=str, default='demo_images/results',
-                        help='output folder to write results')
+                        help='output folder to write logs')
 
     parser.add_argument('--tracker_batch_size', type=int, default=1,
                         help='batch size of object detector used for bbox tracking')
