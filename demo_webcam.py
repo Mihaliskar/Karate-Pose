@@ -235,7 +235,24 @@ def to_json_serializable(obj):
         return obj
 
 
-def save_raw_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
+def save_raw_dict_to_json(skeleton_dict, output_filename="raw.json"):
+    import json
+
+
+    skeleton_dict = to_json_serializable(skeleton_dict)
+    # Ensure the output directory exists
+    directoryPath = os.path.dirname(output_filename)
+  
+    if (directoryPath!=""):
+       os.makedirs(directoryPath, exist_ok=True)
+
+    # Save as pretty-printed JSON
+    with open(output_filename, "w") as f:
+        json.dump(skeleton_dict, f, indent=4)
+
+    #print(f"[INFO] Skeleton saved to {output_filename}")
+
+def save_transformed_dict_to_json(skeleton_dict, output_filename="transformed.json"):
     import json
 
 
@@ -255,7 +272,6 @@ def save_raw_dict_to_json(skeleton_dict, output_filename="skeleton.json"):
 
 
 def main(args):
-
     input_image_folder = args.image_folder
     output_path        = args.output_folder
     result_path        = args.result_folder
@@ -350,20 +366,29 @@ def main(args):
                         #At this point hmr_output has the resolved pose data..!
                         #---------------------------------------------------------------------------------------
                         
-                        #pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
-                        pose3DAsDictionary = encode_smplx_skeleton_to_dict(hmr_output)
+                        #The first is only for the body the second also includes hands and face
+                        pose3DAsDictionary = encode_smpl_skeleton_to_dict(hmr_output)
+                        #pose3DAsDictionary = encode_smplx_skeleton_to_dict(hmr_output)
 
                         history.append(pose3DAsDictionary)
  
                         #We can dump the skeleton to disk as skeleton_00000.json etc.
                         skeletons = os.path.join(output, "skeletons")
-                        os.makedirs(colorframes, exist_ok=True)
+                        os.makedirs(skeletons, exist_ok=True)
                         raw = os.path.join(output, "raw")
-                        os.makedirs(colorframes, exist_ok=True)
+                        os.makedirs(raw, exist_ok=True)
                         if (args.save):
                            save_skeleton_dict_to_json(pose3DAsDictionary,output_filename=os.path.join(skeletons, "skeleton_%05u.json" % frameNumber))
                            del hmr_output['vertices'] # <- Remove this because it is really big
                            save_raw_dict_to_json(hmr_output,output_filename=os.path.join(raw, "raw_%05u.json" % frameNumber))
+
+                        #Do the transformations here
+
+                        if (args.save):
+                            transformed = os.path.join(output, "transformed")
+                            os.makedirs(transformed, exist_ok=True)
+                            save_transformed_dict_to_json(pose3DAsDictionary,output_filename=os.path.join(transformed, "transformed_%05u.json" % frameNumber))
+
 
                         #Uncomment to also do a matlab visualization
                         #save_matlab_visualization(hmr_output,output_filename="skeleton_%05u.png" % frameNumber)
