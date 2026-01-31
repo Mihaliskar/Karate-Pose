@@ -269,7 +269,71 @@ def save_transformed_dict_to_json(skeleton_dict, output_filename="transformed.js
 
     #print(f"[INFO] Skeleton saved to {output_filename}")
 
+def normalize_pose_body_frame(pose, eps=1e-8, target_hip_width=1.0):
+    pelvis = np.asarray(pose["pelvis"], dtype=float)
 
+    #normalize position
+    centered = {k: np.asarray(v, dtype=float) - pelvis for k, v in pose.items()}
+
+    #normalize rotation
+    # --- X: hips left->right ---
+    hip_vec = centered["right_hip"] - centered["left_hip"]
+    hip_w = np.linalg.norm(hip_vec)
+    if hip_w < eps:
+        raise ValueError("Bad hips: too close / missing signal")
+    X = hip_vec / hip_w
+
+    # --- Y: pelvis->neck ---
+    if "neck" not in centered:
+        raise KeyError("Need 'neck' to define up axis (or add a fallback).")
+    y_vec = centered["neck"]
+    y_n = np.linalg.norm(y_vec)
+    if y_n < eps:
+        raise ValueError("Bad neck: too close to pelvis / missing signal")
+    Y0 = y_vec / y_n
+
+    # Optional: make X consistent with shoulders if available
+    if "left_shoulder" in centered and "right_shoulder" in centered:
+        sho_vec = centered["right_shoulder"] - centered["left_shoulder"]
+        if np.linalg.norm(sho_vec) > eps:
+            sho_dir = sho_vec / (np.linalg.norm(sho_vec) + eps)
+            if np.dot(X, sho_dir) < 0:
+                X = -X  # flip X to match shoulder LR
+
+    # --- Z: forward via cross (right-handed) ---
+    Z = np.cross(X, Y0)
+    z_n = np.linalg.norm(Z)
+    if z_n < eps:
+        raise ValueError("Degenerate frame: X and Y nearly parallel")
+    Z = Z / z_n
+
+    # --- Re-orthogonalize Y ---
+    Y = np.cross(Z, X)
+    Y = Y / (np.linalg.norm(Y) + eps)
+
+    # fix Z sign using shoulders as "front hint"
+    if "left_shoulder" in centered and "right_shoulder" in centered:
+        shoulder_vec = centered["right_shoulder"] - centered["left_shoulder"]
+        torso_normal = np.cross(shoulder_vec, Y)  # ~forward/back
+        tn = np.linalg.norm(torso_normal)
+        if tn > eps:
+            torso_normal /= tn
+            if np.dot(Z, torso_normal) < 0:
+                Z = -Z
+                Y = np.cross(Z, X)
+                Y = Y / (np.linalg.norm(Y) + eps)
+
+    R = np.stack((X, Y, Z), axis=1)  
+
+    rotated = {k: (R.T @ p) for k, p in centered.items()}
+
+    s = np.linalg.norm(rotated["right_hip"] - rotated["left_hip"])
+    if s < eps:
+        raise ValueError("Scale too small; bad keypoints.")
+    scale = target_hip_width / s
+
+    #normalize scale
+    return {k: (p * scale).tolist() for k, p in rotated.items()}
 
 def main(args):
     input_image_folder = args.image_folder
@@ -382,12 +446,12 @@ def main(args):
                            del hmr_output['vertices'] # <- Remove this because it is really big
                            save_raw_dict_to_json(hmr_output,output_filename=os.path.join(raw, "raw_%05u.json" % frameNumber))
 
-                        #Do the transformations here
+                        new_dict = normalize_pose_body_frame(pose3DAsDictionary)
 
                         if (args.save):
                             transformed = os.path.join(output, "transformed")
                             os.makedirs(transformed, exist_ok=True)
-                            save_transformed_dict_to_json(pose3DAsDictionary,output_filename=os.path.join(transformed, "transformed_%05u.json" % frameNumber))
+                            save_transformed_dict_to_json(new_dict, output_filename=os.path.join(transformed, "transformed_%05u.json" % frameNumber))
 
 
                         #Uncomment to also do a matlab visualization
