@@ -20,6 +20,7 @@ sys.path.append('')
 from tools import saveCSVFileFromListOfDicts, saveCSVFileFromListOfDictsFollowingSkeletonOrder, get_azure_kinect_skeleton, get_smpl_skeleton, get_colors
 
 from normalize import normalize_pose
+from plotting import save_transformed_dict_plotted
 """
 Check if a path exists
 """
@@ -256,7 +257,6 @@ def save_raw_dict_to_json(skeleton_dict, output_filename="raw.json"):
 def save_transformed_dict_to_json(skeleton_dict, output_filename="transformed.json"):
     import json
 
-
     skeleton_dict = to_json_serializable(skeleton_dict)
     # Ensure the output directory exists
     directoryPath = os.path.dirname(output_filename)
@@ -387,6 +387,10 @@ def main(args):
                             transformed = os.path.join(output, "transformed")
                             os.makedirs(transformed, exist_ok=True)
                             save_transformed_dict_to_json(new_dict, output_filename=os.path.join(transformed, "transformed_%05u.json" % frameNumber))
+                            if (args.plot):
+                                plotted = os.path.join(output, "plotted")
+                                os.makedirs(plotted, exist_ok=True)
+                                save_transformed_dict_plotted(new_dict, output_filename=os.path.join(plotted, "plotted_%05u.png" % frameNumber))
 
 
                         #Uncomment to also do a matlab visualization
@@ -420,6 +424,8 @@ if __name__ == '__main__':
 
 
     parser.add_argument('--save', help='Save .json / visualization output', action=argparse.BooleanOptionalAction)
+
+    parser.add_argument('--plot', help='Save .png / plot the output', action=argparse.BooleanOptionalAction)
 
     parser.add_argument('--result_folder', type=str, default='output/results',
                         help='output folder to write results')
