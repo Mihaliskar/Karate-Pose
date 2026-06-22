@@ -58,7 +58,6 @@ numba
 filterpy
 tensorboard
 kornia
-torch==1.13.1
 pytorch-lightning
 torchvision
 git+https://github.com/nvasilik/yolov3-pytorch.git
@@ -67,3 +66,4 @@ jpeg4py
 #git+https://github.com/jamesbowman/openexrpython.git
 wandb
 ipdb
+torch
