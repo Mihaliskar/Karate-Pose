@@ -1,0 +1,9 @@
+python -m venv 
+
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+python3 demo_webcam.py --input shuffle.webm-data/ --save
+
+python3 demo_webcam.py --input shuffle.webm-data/ --save --plot
