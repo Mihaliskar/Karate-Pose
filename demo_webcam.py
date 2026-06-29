@@ -21,6 +21,7 @@ from tools import saveCSVFileFromListOfDicts, saveCSVFileFromListOfDictsFollowin
 
 from normalize import normalize_pose
 from plotting import save_transformed_dict_plotted
+from matrix_generation import generate_edm
 """
 Check if a path exists
 """
@@ -382,11 +383,16 @@ def main(args):
                            save_raw_dict_to_json(hmr_output,output_filename=os.path.join(raw, "raw_%05u.json" % frameNumber))
 
                         new_dict = normalize_pose(pose3DAsDictionary)
+                        edm = generate_edm(pose3DAsDictionary)
 
                         if (args.save):
                             transformed = os.path.join(output, "transformed")
                             os.makedirs(transformed, exist_ok=True)
                             save_transformed_dict_to_json(new_dict, output_filename=os.path.join(transformed, "transformed_%05u.json" % frameNumber))
+                            edm_path = os.path.join(output, "edm")
+                            os.makedirs(edm_path, exist_ok=True)
+                            save_transformed_dict_to_json(edm, output_filename=os.path.join(edm_path, "edm_%05u.json" % frameNumber))
+                            
                             if (args.plot):
                                 plotted = os.path.join(output, "plotted")
                                 os.makedirs(plotted, exist_ok=True)
