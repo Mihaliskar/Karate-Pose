@@ -9,16 +9,16 @@ import matplotlib.pyplot as plt
 # SETTINGS
 # -----------------------------
 
-TRANSFORMED_FOLDER = Path("transformed")
-EDM_FOLDER = Path("edm")
-OUTPUT_FOLDER = Path("comparison_output")
+TRANSFORMED_FOLDER = Path("testing/transformed")
+EDM_FOLDER = Path("testing/edm")
+OUTPUT_FOLDER = Path("testing/comparison_output")
 
 # Choose one:
 # "error"      -> total error between files
 # "rmse"       -> average error size
 # "similarity" -> 1.0 means identical, lower means more different
-OUTPUT_TYPE = "error"
-#OUTPUT_TYPE = "similarity"
+#OUTPUT_TYPE = "error"
+OUTPUT_TYPE = "similarity"
 
 # -----------------------------
 # LOADING FUNCTIONS
