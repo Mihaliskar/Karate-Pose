@@ -1,0 +1,135 @@
+Verified result using your files
+
+I tested the script against your uploaded features.npz. It produced:
+
+Split	Samples	Percentage	Recording groups
+Training	542	71.2%	178
+Validation	110	14.5%	34
+Test	109	14.3%	35
+Total	761	100%	247
+
+Class distribution:
+
+Class	Train	Validation	Test
+age_uke_left	68	14	14
+age_uke_right	72	14	14
+gedan_barai_left	70	14	15
+gedan_barai_right	63	14	12
+oi_zuki_left	71	13	14
+oi_zuki_right	65	13	14
+shoto_uke_left	69	14	14
+shoto_uke_right	64	14	12
+
+Created split files in: /extraspace/Karate-Pose/train_karate_detection/splits
+Random seed: 42
+Total samples: 761
+Unique recording groups: 247
+Split summary:
+
+train: 540 samples (71.0%), 178 recording groups
+  age_uke_left: 77
+  age_uke_right: 64
+  gedan_barai_left: 78
+  gedan_barai_right: 65
+  oi_zuki_left: 69
+  oi_zuki_right: 60
+  shoto_uke_left: 73
+  shoto_uke_right: 54
+
+validation: 101 samples (13.3%), 34 recording groups
+  age_uke_left: 15
+  age_uke_right: 7
+  gedan_barai_left: 4
+  gedan_barai_right: 9
+  oi_zuki_left: 14
+  oi_zuki_right: 15
+  shoto_uke_left: 15
+  shoto_uke_right: 22
+
+test: 120 samples (15.8%), 35 recording groups
+  age_uke_left: 4
+  age_uke_right: 29
+  gedan_barai_left: 17
+  gedan_barai_right: 15
+  oi_zuki_left: 15
+  oi_zuki_right: 17
+  shoto_uke_left: 9
+  shoto_uke_right: 14
+
+
+
+
+(venv) mihaliskar@mihalis:/extraspace/Karate-Pose/train_karate_detection$ python3 src/create_splits.py --seed 42
+Created split files in: /extraspace/Karate-Pose/train_karate_detection/splits
+Random seed: 42
+Total samples: 761
+Unique recording groups: 247
+Split summary:
+
+train: 540 samples (71.0%), 178 recording groups
+  age_uke_left: 77
+  age_uke_right: 64
+  gedan_barai_left: 78
+  gedan_barai_right: 65
+  oi_zuki_left: 69
+  oi_zuki_right: 60
+  shoto_uke_left: 73
+  shoto_uke_right: 54
+
+validation: 101 samples (13.3%), 34 recording groups
+  age_uke_left: 15
+  age_uke_right: 7
+  gedan_barai_left: 4
+  gedan_barai_right: 9
+  oi_zuki_left: 14
+  oi_zuki_right: 15
+  shoto_uke_left: 15
+  shoto_uke_right: 22
+
+test: 120 samples (15.8%), 35 recording groups
+  age_uke_left: 4
+  age_uke_right: 29
+  gedan_barai_left: 17
+  gedan_barai_right: 15
+  oi_zuki_left: 15
+  oi_zuki_right: 17
+  shoto_uke_left: 9
+  shoto_uke_right: 14
+
+
+
+Created split files in: /extraspace/Karate-Pose/train_karate_detection/splits
+Random seed: 42
+Total samples: 761
+Unique recording groups: 247
+Split summary:
+
+train: 531 samples (69.8%), 169 recording groups
+  age_uke_left: 68
+  age_uke_right: 70
+  gedan_barai_left: 69
+  gedan_barai_right: 63
+  oi_zuki_left: 68
+  oi_zuki_right: 64
+  shoto_uke_left: 67
+  shoto_uke_right: 62
+
+validation: 115 samples (15.1%), 41 recording groups
+  age_uke_left: 14
+  age_uke_right: 15
+  gedan_barai_left: 15
+  gedan_barai_right: 13
+  oi_zuki_left: 15
+  oi_zuki_right: 14
+  shoto_uke_left: 15
+  shoto_uke_right: 14
+
+test: 115 samples (15.1%), 37 recording groups
+  age_uke_left: 14
+  age_uke_right: 15
+  gedan_barai_left: 15
+  gedan_barai_right: 13
+  oi_zuki_left: 15
+  oi_zuki_right: 14
+  shoto_uke_left: 15
+  shoto_uke_right: 14

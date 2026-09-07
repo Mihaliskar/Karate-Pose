@@ -34,3 +34,5 @@ venv/
 data
 dataset
 testing
+train_karate_detection/dataset/
+train_karate_detection/edms/
