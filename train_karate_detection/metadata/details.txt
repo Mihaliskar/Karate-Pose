@@ -26,84 +26,6 @@ Total samples: 761
 Unique recording groups: 247
 Split summary:
 
-train: 540 samples (71.0%), 178 recording groups
-  age_uke_left: 77
-  age_uke_right: 64
-  gedan_barai_left: 78
-  gedan_barai_right: 65
-  oi_zuki_left: 69
-  oi_zuki_right: 60
-  shoto_uke_left: 73
-  shoto_uke_right: 54
-
-validation: 101 samples (13.3%), 34 recording groups
-  age_uke_left: 15
-  age_uke_right: 7
-  gedan_barai_left: 4
-  gedan_barai_right: 9
-  oi_zuki_left: 14
-  oi_zuki_right: 15
-  shoto_uke_left: 15
-  shoto_uke_right: 22
-
-test: 120 samples (15.8%), 35 recording groups
-  age_uke_left: 4
-  age_uke_right: 29
-  gedan_barai_left: 17
-  gedan_barai_right: 15
-  oi_zuki_left: 15
-  oi_zuki_right: 17
-  shoto_uke_left: 9
-  shoto_uke_right: 14
-
-
-
-
-(venv) mihaliskar@mihalis:/extraspace/Karate-Pose/train_karate_detection$ python3 src/create_splits.py --seed 42
-Created split files in: /extraspace/Karate-Pose/train_karate_detection/splits
-Random seed: 42
-Total samples: 761
-Unique recording groups: 247
-Split summary:
-
-train: 540 samples (71.0%), 178 recording groups
-  age_uke_left: 77
-  age_uke_right: 64
-  gedan_barai_left: 78
-  gedan_barai_right: 65
-  oi_zuki_left: 69
-  oi_zuki_right: 60
-  shoto_uke_left: 73
-  shoto_uke_right: 54
-
-validation: 101 samples (13.3%), 34 recording groups
-  age_uke_left: 15
-  age_uke_right: 7
-  gedan_barai_left: 4
-  gedan_barai_right: 9
-  oi_zuki_left: 14
-  oi_zuki_right: 15
-  shoto_uke_left: 15
-  shoto_uke_right: 22
-
-test: 120 samples (15.8%), 35 recording groups
-  age_uke_left: 4
-  age_uke_right: 29
-  gedan_barai_left: 17
-  gedan_barai_right: 15
-  oi_zuki_left: 15
-  oi_zuki_right: 17
-  shoto_uke_left: 9
-  shoto_uke_right: 14
-
-
-
-Created split files in: /extraspace/Karate-Pose/train_karate_detection/splits
-Random seed: 42
-Total samples: 761
-Unique recording groups: 247
-Split summary:
-
 train: 531 samples (69.8%), 169 recording groups
   age_uke_left: 68
   age_uke_right: 70
@@ -133,3 +55,15 @@ test: 115 samples (15.1%), 37 recording groups
   oi_zuki_right: 14
   shoto_uke_left: 15
   shoto_uke_right: 14
+
+
+Labels
+
+0	age_uke_left
+1	age_uke_right
+2	gedan_barai_left
+3	gedan_barai_right
+4	oi_zuki_left
+5	oi_zuki_right
+6	shoto_uke_left
+7	shoto_uke_right
