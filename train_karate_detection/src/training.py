@@ -77,8 +77,6 @@ def main():
 
         model = train_ovr_linear(X_train, y_train)
 
-        features.close()
-
         print("OVR linear SVM training completed.")
 
         X_validation, y_validation = load_validation_data(features)
@@ -95,6 +93,8 @@ def main():
 
 
         X_test, y_test = load_testing_data(features)
+
+        features.close()
 
 
 if __name__ == "__main__":
