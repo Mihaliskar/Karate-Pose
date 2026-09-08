@@ -3,7 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import LinearSVC
-from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
+from pathlib import Path
+import joblib
 
 
 
@@ -71,30 +73,132 @@ def print_detailed_results(y_validation, predictions, class_names):
     print("Confusion matrix:")
     print(confusion_matrix(y_validation, predictions))
 
+def save_model(model, class_names, output_path):
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    model_data = {
+        "model": model,
+        "class_names": class_names,
+        "feature_type": "X",
+    }
+
+    joblib.dump(model_data, output_path)
+
+def save_validation_results(y_validation, predictions, accuracy, macro_f1, class_names, output_directory):
+    output_directory.mkdir(parents=True, exist_ok=True)
+
+    report = classification_report(
+        y_validation,
+        predictions,
+        target_names=class_names,
+        digits=4,
+    )
+
+    results_path = output_directory / "validation_results.txt"
+
+    with results_path.open("w", encoding="utf-8") as results_file:
+        results_file.write("OVR Linear SVM\n")
+        results_file.write("========================\n")
+        results_file.write(f"Validation accuracy: {accuracy:.4f}\n")
+        results_file.write(f"Validation macro F1: {macro_f1:.4f}\n\n")
+        results_file.write("Classification report:\n")
+        results_file.write(report)
+
+def save_confusion_matrix_csv(y_validation, predictions, output_path):
+    matrix = confusion_matrix(y_validation, predictions)
+
+    np.savetxt(
+        output_path,
+        matrix,
+        delimiter=",",
+        fmt="%d",
+    )
+
+def save_confusion_matrix_heatmap(y_validation, predictions, class_names, output_path):
+    matrix = confusion_matrix(y_validation, predictions)
+
+    figure, axis = plt.subplots(figsize=(11, 9))
+
+    display = ConfusionMatrixDisplay(
+        confusion_matrix=matrix,
+        display_labels=class_names,
+    )
+
+    display.plot(
+        ax=axis,
+        cmap="Blues",
+        values_format="d",
+        colorbar=True,
+    )
+
+    axis.set_title("OVR Linear SVM — Validation Confusion Matrix")
+    plt.xticks(rotation=45, ha="right")
+    figure.tight_layout()
+
+    figure.savefig(
+        output_path,
+        dpi=300,
+        bbox_inches="tight",
+    )
+
+    plt.close(figure)
+
 def main():
+    output_directory = Path("results/ovr_linear")
+
     with np.load("features/features.npz") as features:
         X_train, y_train = load_training_data(features)
+        X_validation, y_validation = load_validation_data(features)
+
+        class_names = features["class_names"].copy()
 
         model = train_ovr_linear(X_train, y_train)
 
-        print("OVR linear SVM training completed.")
+        predictions, accuracy, macro_f1 = evaluate_model(
+            model,
+            X_validation,
+            y_validation,
+        )
 
-        X_validation, y_validation = load_validation_data(features)
+    print("OVR linear SVM training completed.")
+    print(f"Validation accuracy: {accuracy:.4f}")
+    print(f"Validation macro F1: {macro_f1:.4f}")
 
-        predictions, accuracy, macro_f1 = evaluate_model(model, X_validation, y_validation)
+    print_detailed_results(
+        y_validation,
+        predictions,
+        class_names,
+    )
 
-        print(f"Validation accuracy: {accuracy:.4f}")
-        print(f"Validation macro F1: {macro_f1:.4f}")
+    save_model(
+        model,
+        class_names,
+        output_directory / "model.joblib",
+    )
 
-        class_names = features["class_names"]
+    save_validation_results(
+        y_validation,
+        predictions,
+        accuracy,
+        macro_f1,
+        class_names,
+        output_directory,
+    )
 
-        print_detailed_results(y_validation, predictions, class_names)
+    save_confusion_matrix_csv(
+        y_validation,
+        predictions,
+        output_directory / "validation_confusion_matrix.csv",
+    )
 
+    save_confusion_matrix_heatmap(
+        y_validation,
+        predictions,
+        class_names,
+        output_directory / "validation_confusion_matrix.png",
+    )
 
-
-        X_test, y_test = load_testing_data(features)
-
-        features.close()
+    print(f"\nSaved model and results to: {output_directory}")
 
 
 if __name__ == "__main__":
