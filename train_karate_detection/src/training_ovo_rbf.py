@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.svm import LinearSVC
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 from pathlib import Path
 import joblib
@@ -35,14 +35,15 @@ def load_testing_data(features):
 
     return X_test, y_test
 
-def train_ovr_linear(X_train, y_train):
-    binary_svm = LinearSVC(
+def train_ovo_rbf(X_train, y_train):
+    binary_svm = SVC(
+        kernel="rbf",
         C=1.0,
         random_state=42,
         max_iter=10_000,
     )
 
-    model = OneVsRestClassifier(binary_svm)
+    model = OneVsOneClassifier(binary_svm)
     model.fit(X_train, y_train)
 
     return model
@@ -97,7 +98,7 @@ def save_validation_results(y_validation, predictions, accuracy, macro_f1, class
     results_path = output_directory / "validation_results.txt"
 
     with results_path.open("w", encoding="utf-8") as results_file:
-        results_file.write("OVR Linear SVM\n")
+        results_file.write("OVO RBF SVM\n")
         results_file.write("========================\n")
         results_file.write(f"Validation accuracy: {accuracy:.4f}\n")
         results_file.write(f"Validation macro F1: {macro_f1:.4f}\n\n")
@@ -131,7 +132,7 @@ def save_confusion_matrix_heatmap(y_validation, predictions, class_names, output
         colorbar=True,
     )
 
-    axis.set_title("OVR Linear SVM — Validation Confusion Matrix")
+    axis.set_title("OVO RBF SVM — Validation Confusion Matrix")
     plt.xticks(rotation=45, ha="right")
     figure.tight_layout()
 
@@ -158,7 +159,7 @@ def save_test_results(y_test, predictions, accuracy, macro_f1, class_names, outp
     output_path = output_directory / "test_results.txt"
 
     with output_path.open("w", encoding="utf-8") as results_file:
-        results_file.write("OVR Linear SVM — Test Results\n")
+        results_file.write("OVO RBF SVM — Test Results\n")
         results_file.write("=============================\n")
         results_file.write(f"Test accuracy: {accuracy:.4f}\n")
         results_file.write(f"Test macro F1: {macro_f1:.4f}\n\n")
@@ -188,7 +189,7 @@ def save_test_confusion_matrix_heatmap(y_test, predictions, class_names, output_
         colorbar=True,
     )
 
-    axis.set_title("OVR Linear SVM — Test Confusion Matrix")
+    axis.set_title("OVO RBF SVM — Test Confusion Matrix")
     plt.xticks(rotation=45, ha="right")
     figure.tight_layout()
 
@@ -210,7 +211,7 @@ def load_model(model_path):
     return model, class_names, feature_type
 
 def main():
-    output_directory = Path("results/ovr_linear")
+    output_directory = Path("results/ovo_rbf")
     model_path = output_directory / "model.joblib"
 
     # ---------------------------------------------------------
@@ -222,7 +223,7 @@ def main():
         X_validation, y_validation = load_validation_data(features)
         class_names = features["class_names"].copy()
 
-        model = train_ovr_linear(X_train, y_train)
+        model = train_ovo_rbf(X_train, y_train)
 
         validation_predictions, validation_accuracy, validation_macro_f1 = (
             evaluate_model(
@@ -232,7 +233,7 @@ def main():
             )
         )
 
-    print("OVR linear SVM training completed.")
+    print("OVO RBF SVM training completed.")
     print(f"Validation accuracy: {validation_accuracy:.4f}")
     print(f"Validation macro F1: {validation_macro_f1:.4f}")
 
