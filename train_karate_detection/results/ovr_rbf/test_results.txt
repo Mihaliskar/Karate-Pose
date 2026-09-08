@@ -1,0 +1,20 @@
+OVR RBF SVM — Test Results
+=============================
+Test accuracy: 0.8000
+Test macro F1: 0.7855
+
+Classification report:
+                   precision    recall  f1-score   support
+
+     age_uke_left     0.7368    1.0000    0.8485        14
+    age_uke_right     0.8125    0.8667    0.8387        15
+ gedan_barai_left     0.9375    1.0000    0.9677        15
+gedan_barai_right     1.0000    0.9231    0.9600        13
+     oi_zuki_left     0.6667    0.2667    0.3810        15
+    oi_zuki_right     1.0000    0.5714    0.7273        14
+   shoto_uke_left     0.6000    0.8000    0.6857        15
+  shoto_uke_right     0.7778    1.0000    0.8750        14
+
+         accuracy                         0.8000       115
+        macro avg     0.8164    0.8035    0.7855       115
+     weighted avg     0.8126    0.8000    0.7816       115

@@ -1,20 +1,20 @@
 OVR Linear SVM — Test Results
 =============================
-Test accuracy: 0.8783
-Test macro F1: 0.8799
+Test accuracy: 0.8609
+Test macro F1: 0.8612
 
 Classification report:
                    precision    recall  f1-score   support
 
-     age_uke_left     0.8750    1.0000    0.9333        14
+     age_uke_left     0.7368    1.0000    0.8485        14
     age_uke_right     1.0000    0.8667    0.9286        15
  gedan_barai_left     0.9375    1.0000    0.9677        15
 gedan_barai_right     1.0000    0.9231    0.9600        13
-     oi_zuki_left     0.7333    0.7333    0.7333        15
+     oi_zuki_left     0.6923    0.6000    0.6429        15
     oi_zuki_right     1.0000    0.7857    0.8800        14
-   shoto_uke_left     0.7333    0.7333    0.7333        15
+   shoto_uke_left     0.7857    0.7333    0.7586        15
   shoto_uke_right     0.8235    1.0000    0.9032        14
 
-         accuracy                         0.8783       115
-        macro avg     0.8878    0.8803    0.8799       115
-     weighted avg     0.8856    0.8783    0.8779       115
+         accuracy                         0.8609       115
+        macro avg     0.8720    0.8636    0.8612       115
+     weighted avg     0.8702    0.8609    0.8591       115

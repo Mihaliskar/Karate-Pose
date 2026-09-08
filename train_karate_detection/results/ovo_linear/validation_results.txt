@@ -1,0 +1,20 @@
+OVO Linear SVM
+========================
+Validation accuracy: 0.9826
+Validation macro F1: 0.9821
+
+Classification report:
+                   precision    recall  f1-score   support
+
+     age_uke_left     1.0000    1.0000    1.0000        14
+    age_uke_right     1.0000    1.0000    1.0000        15
+ gedan_barai_left     1.0000    1.0000    1.0000        15
+gedan_barai_right     1.0000    1.0000    1.0000        13
+     oi_zuki_left     1.0000    1.0000    1.0000        15
+    oi_zuki_right     1.0000    0.8571    0.9231        14
+   shoto_uke_left     1.0000    1.0000    1.0000        15
+  shoto_uke_right     0.8750    1.0000    0.9333        14
+
+         accuracy                         0.9826       115
+        macro avg     0.9844    0.9821    0.9821       115
+     weighted avg     0.9848    0.9826    0.9825       115
