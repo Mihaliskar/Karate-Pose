@@ -1,7 +1,7 @@
-OVO Linear SVM — Test Results
-=============================
-Test accuracy: 0.9043
-Test macro F1: 0.9049
+OVO Linear
+========================
+test accuracy: 0.9043
+test macro F1: 0.9049
 
 Classification report:
                    precision    recall  f1-score   support

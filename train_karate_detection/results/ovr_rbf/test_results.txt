@@ -1,7 +1,7 @@
-OVR RBF SVM — Test Results
-=============================
-Test accuracy: 0.8000
-Test macro F1: 0.7855
+OVR RBF
+========================
+test accuracy: 0.8000
+test macro F1: 0.7855
 
 Classification report:
                    precision    recall  f1-score   support

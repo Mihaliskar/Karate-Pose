@@ -1,7 +1,7 @@
-OVO Linear SVM
+OVO Linear
 ========================
-Validation accuracy: 0.9826
-Validation macro F1: 0.9821
+validation accuracy: 0.9826
+validation macro F1: 0.9821
 
 Classification report:
                    precision    recall  f1-score   support

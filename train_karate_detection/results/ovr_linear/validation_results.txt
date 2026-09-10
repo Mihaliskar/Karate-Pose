@@ -1,7 +1,7 @@
-OVR Linear SVM
+OVR Linear
 ========================
-Validation accuracy: 0.9391
-Validation macro F1: 0.9322
+validation accuracy: 0.9391
+validation macro F1: 0.9322
 
 Classification report:
                    precision    recall  f1-score   support

@@ -1,7 +1,7 @@
-OVO RBF SVM — Test Results
-=============================
-Test accuracy: 0.9043
-Test macro F1: 0.9040
+OVO RBF
+========================
+test accuracy: 0.9043
+test macro F1: 0.9040
 
 Classification report:
                    precision    recall  f1-score   support

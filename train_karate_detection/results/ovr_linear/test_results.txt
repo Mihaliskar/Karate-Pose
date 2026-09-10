@@ -1,7 +1,7 @@
-OVR Linear SVM — Test Results
-=============================
-Test accuracy: 0.8609
-Test macro F1: 0.8612
+OVR Linear
+========================
+test accuracy: 0.8609
+test macro F1: 0.8612
 
 Classification report:
                    precision    recall  f1-score   support

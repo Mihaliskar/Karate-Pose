@@ -1,7 +1,7 @@
-OVO RBF SVM
+OVO RBF
 ========================
-Validation accuracy: 0.9304
-Validation macro F1: 0.9222
+validation accuracy: 0.9304
+validation macro F1: 0.9222
 
 Classification report:
                    precision    recall  f1-score   support
