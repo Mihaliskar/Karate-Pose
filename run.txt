@@ -7,3 +7,24 @@ pip install -r requirements.txt
 python3 demo_webcam.py --input shuffle.webm-data/ --save
 
 python3 demo_webcam.py --input shuffle.webm-data/ --save --plot
+
+training:
+
+python3 src/training.py --help
+
+python3 src/training.py --train --type ovr_linear
+python3 src/training.py --train --type ovr_rbf
+python3 src/training.py --train --type ovo_linear
+python3 src/training.py --train --type ovo_rbf
+
+python3 src/training.py --test --type ovr_linear
+python3 src/training.py --test --type ovr_rbf
+python3 src/training.py --test --type ovo_linear
+python3 src/training.py --test --type ovo_rbf
+
+python3 src/training.py --train --test --type ovr_linear
+python3 src/training.py --train --test --type ovr_rbf
+python3 src/training.py --train --test --type ovo_linear
+python3 src/training.py --train --test --type ovo_rbf
+
+python3 src/training.py --train --test --type ovr_linear --output results/my_experiment --input saved_models/custom_model.joblib
