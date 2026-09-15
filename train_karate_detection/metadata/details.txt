@@ -67,3 +67,11 @@ Labels
 5	oi_zuki_right
 6	shoto_uke_left
 7	shoto_uke_right
+
+
+First Validation results
+
+OVO Linear  0.9826
+OVO RBF     0.9304
+OVR Linear  0.9391
+OVR RBF     0.8696
