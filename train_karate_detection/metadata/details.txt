@@ -75,3 +75,16 @@ OVO Linear  0.9826
 OVO RBF     0.9304
 OVR Linear  0.9391
 OVR RBF     0.8696
+
+
+Total Dataset Images
+
+age_uke_left      96
+age_uke_right     100
+gedan_barai_left  99
+gedan_barai_right 89
+oi_zuki_left      98
+oi_zuki_right     92
+shoto_uke_left    97
+shoto_uke_right   90
+
