@@ -185,6 +185,13 @@ def parse_arguments():
         help="Model type to train or test.",
     )
 
+    parser.add_argument(
+        "--c",
+        type=float,
+        default=1,
+        help="C value for the SVM. Default: 1.",
+    )
+
     return parser.parse_args()
 
 def main():
@@ -192,6 +199,7 @@ def main():
     train = args.train
     test = args.test
     model_type = args.type
+    c = args.c 
     output_directory = args.output if args.output is not None else Path("results") / model_type
     model_path = args.input if args.input is not None else output_directory / "model.joblib"
 
@@ -232,7 +240,7 @@ def main():
             X_validation, y_validation = load_data("validation", features)
 
             print(f"Starting training of {model_name} SVM")
-            model = train_model(strategy, kernel, 1.0, X_train, y_train)
+            model = train_model(strategy, kernel, c, X_train, y_train)
 
             validation_predictions, validation_accuracy, validation_macro_f1 = evaluate_model(model, X_validation, y_validation)
 

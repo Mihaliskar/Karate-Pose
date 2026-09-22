@@ -1,0 +1,20 @@
+OVR Linear
+========================
+validation accuracy: 0.7913
+validation macro F1: 0.7255
+
+Classification report:
+                   precision    recall  f1-score   support
+
+     age_uke_left     0.6087    1.0000    0.7568        14
+    age_uke_right     0.7500    1.0000    0.8571        15
+ gedan_barai_left     1.0000    1.0000    1.0000        15
+gedan_barai_right     0.7647    1.0000    0.8667        13
+     oi_zuki_left     1.0000    0.3333    0.5000        15
+    oi_zuki_right     0.0000    0.0000    0.0000        14
+   shoto_uke_left     1.0000    1.0000    1.0000        15
+  shoto_uke_right     0.7000    1.0000    0.8235        14
+
+         accuracy                         0.7913       115
+        macro avg     0.7279    0.7917    0.7255       115
+     weighted avg     0.7349    0.7913    0.7282       115
