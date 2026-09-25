@@ -2,7 +2,10 @@
 """Validate karate-pose EDM files and build features/features.npz.
 
 The metadata CSV must contain:
-    image_path, edm_path, class_name, person_id, group_id
+    image_path, edm_path, class_name, side, person_id, group_id
+
+The side column is stored as metadata only.
+It is NOT used when creating class labels.
 
 Each EDM JSON file must contain a square matrix directly as a nested list.
 For a 22 x 22 EDM, the script extracts 231 unique upper-triangle distances.
@@ -23,9 +26,11 @@ REQUIRED_COLUMNS = {
     "image_path",
     "edm_path",
     "class_name",
+    "side",
     "person_id",
     "group_id",
 }
+
 SYMMETRY_TOLERANCE = 1e-5
 DIAGONAL_TOLERANCE = 1e-5
 NEGATIVE_TOLERANCE = 1e-6
@@ -38,6 +43,7 @@ def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Build raw and normalized feature vectors from EDM JSON files."
     )
+
     parser.add_argument(
         "--project-root",
         type=Path,
@@ -47,6 +53,7 @@ def parse_arguments() -> argparse.Namespace:
             "By default this is the parent of src/."
         ),
     )
+
     return parser.parse_args()
 
 
@@ -56,6 +63,7 @@ def read_metadata(metadata_path: Path) -> list[dict[str, str]]:
 
     with metadata_path.open("r", newline="", encoding="utf-8-sig") as csv_file:
         reader = csv.DictReader(csv_file)
+
         columns = set(reader.fieldnames or [])
         missing_columns = REQUIRED_COLUMNS - columns
 
@@ -64,7 +72,6 @@ def read_metadata(metadata_path: Path) -> list[dict[str, str]]:
                 f"Metadata CSV is missing columns: {sorted(missing_columns)}"
             )
 
-        # Your current CSV contains blank lines. Ignore rows with no values.
         rows = [
             {key: (value or "").strip() for key, value in row.items()}
             for row in reader
@@ -87,36 +94,54 @@ def load_and_validate_edm(edm_path: Path) -> np.ndarray:
     try:
         with edm_path.open("r", encoding="utf-8") as json_file:
             data = json.load(json_file)
+
     except json.JSONDecodeError as error:
         raise ValueError(f"Invalid JSON: {error}") from error
 
-    # The user's JSON files contain the matrix directly, not under an "edm" key.
     try:
         edm = np.asarray(data, dtype=np.float32)
+
     except (TypeError, ValueError) as error:
         raise ValueError("EDM does not contain a numeric matrix") from error
 
     if edm.ndim != 2:
-        raise ValueError(f"EDM must be two-dimensional, got shape {edm.shape}")
+        raise ValueError(
+            f"EDM must be two-dimensional, got shape {edm.shape}"
+        )
 
     if edm.shape[0] != edm.shape[1]:
-        raise ValueError(f"EDM must be square, got shape {edm.shape}")
+        raise ValueError(
+            f"EDM must be square, got shape {edm.shape}"
+        )
 
     if edm.shape[0] < 2:
-        raise ValueError(f"EDM is too small: {edm.shape}")
+        raise ValueError(
+            f"EDM is too small: {edm.shape}"
+        )
 
     if not np.all(np.isfinite(edm)):
-        invalid_count = int(np.size(edm) - np.count_nonzero(np.isfinite(edm)))
-        raise ValueError(f"EDM contains {invalid_count} NaN or infinite values")
+        invalid_count = int(
+            np.size(edm) - np.count_nonzero(np.isfinite(edm))
+        )
 
-    maximum_symmetry_error = float(np.max(np.abs(edm - edm.T)))
+        raise ValueError(
+            f"EDM contains {invalid_count} NaN or infinite values"
+        )
+
+    maximum_symmetry_error = float(
+        np.max(np.abs(edm - edm.T))
+    )
+
     if maximum_symmetry_error > SYMMETRY_TOLERANCE:
         raise ValueError(
             "EDM is not symmetric; maximum difference is "
             f"{maximum_symmetry_error:.8g}"
         )
 
-    maximum_diagonal_value = float(np.max(np.abs(np.diag(edm))))
+    maximum_diagonal_value = float(
+        np.max(np.abs(np.diag(edm)))
+    )
+
     if maximum_diagonal_value > DIAGONAL_TOLERANCE:
         raise ValueError(
             "EDM diagonal is not zero; maximum absolute value is "
@@ -124,8 +149,11 @@ def load_and_validate_edm(edm_path: Path) -> np.ndarray:
         )
 
     minimum_value = float(np.min(edm))
+
     if minimum_value < -NEGATIVE_TOLERANCE:
-        raise ValueError(f"EDM contains a negative distance: {minimum_value}")
+        raise ValueError(
+            f"EDM contains a negative distance: {minimum_value}"
+        )
 
     # Remove harmless floating-point errors close to zero.
     edm[np.abs(edm) < ZERO_TOLERANCE] = 0.0
@@ -136,131 +164,313 @@ def load_and_validate_edm(edm_path: Path) -> np.ndarray:
 
 def vectorize_upper_triangle(edm: np.ndarray) -> np.ndarray:
     """Return every unique distance once, excluding the zero diagonal."""
+
     indices = np.triu_indices_from(edm, k=1)
-    return edm[indices].astype(np.float32, copy=False)
+
+    return edm[indices].astype(
+        np.float32,
+        copy=False,
+    )
 
 
 def normalize_edm(edm: np.ndarray) -> np.ndarray:
     """Remove overall body/image scale by dividing by the largest distance."""
+
     maximum_distance = float(np.max(edm))
 
     if maximum_distance <= ZERO_TOLERANCE:
-        raise ValueError("EDM maximum distance is zero")
+        raise ValueError(
+            "EDM maximum distance is zero"
+        )
 
     return edm / maximum_distance
 
 
 def resolve_project_path(project_root: Path, value: str) -> Path:
     path = Path(value)
-    return path if path.is_absolute() else project_root / path
+
+    return (
+        path
+        if path.is_absolute()
+        else project_root / path
+    )
 
 
 def main() -> None:
     arguments = parse_arguments()
+
     project_root = arguments.project_root.expanduser().resolve()
-    metadata_path = project_root / "metadata" / "dataset.csv"
-    output_path = project_root / "features" / "features.npz"
+
+    metadata_path = (
+        project_root
+        / "metadata"
+        / "dataset.csv"
+    )
+
+    output_path = (
+        project_root
+        / "features"
+        / "features.npz"
+    )
 
     rows = read_metadata(metadata_path)
 
-    class_names = sorted({row["class_name"] for row in rows if row["class_name"]})
+    # IMPORTANT:
+    # Only class_name is used for the target label.
+    #
+    # "age_uke, left" and "age_uke, right"
+    # therefore both become the same class: age_uke.
+    class_names = sorted(
+        {
+            row["class_name"]
+            for row in rows
+            if row["class_name"]
+        }
+    )
+
     if not class_names:
-        raise ValueError("No class names were found in the metadata CSV")
+        raise ValueError(
+            "No class names were found in the metadata CSV"
+        )
 
     class_to_index = {
         class_name: class_index
-        for class_index, class_name in enumerate(class_names)
+        for class_index, class_name
+        in enumerate(class_names)
     }
 
     raw_features: list[np.ndarray] = []
     normalized_features: list[np.ndarray] = []
+
     labels: list[int] = []
+
     image_paths: list[str] = []
     edm_paths: list[str] = []
+
+    sides: list[str] = []
+
     person_ids: list[str] = []
     group_ids: list[str] = []
 
     expected_matrix_shape: tuple[int, int] | None = None
+
     seen_image_paths: set[str] = set()
 
     for csv_line, row in enumerate(rows, start=2):
         image_path = row["image_path"]
         edm_relative_path = row["edm_path"]
         class_name = row["class_name"]
+        side = row["side"]
 
-        if not image_path or not edm_relative_path or not class_name:
+        if (
+            not image_path
+            or not edm_relative_path
+            or not class_name
+        ):
             raise ValueError(
-                f"CSV line {csv_line} is missing image_path, edm_path or class_name"
+                f"CSV line {csv_line} is missing "
+                "image_path, edm_path or class_name"
             )
 
         if image_path in seen_image_paths:
-            raise ValueError(f"Duplicate image_path on CSV line {csv_line}: {image_path}")
+            raise ValueError(
+                f"Duplicate image_path on CSV line "
+                f"{csv_line}: {image_path}"
+            )
+
         seen_image_paths.add(image_path)
 
         if class_name not in class_to_index:
-            raise ValueError(f"Unknown class on CSV line {csv_line}: {class_name}")
+            raise ValueError(
+                f"Unknown class on CSV line "
+                f"{csv_line}: {class_name}"
+            )
 
-        edm_path = resolve_project_path(project_root, edm_relative_path)
+        edm_path = resolve_project_path(
+            project_root,
+            edm_relative_path,
+        )
 
         try:
             edm = load_and_validate_edm(edm_path)
+
         except (OSError, ValueError) as error:
             raise RuntimeError(
-                f"Failed to process CSV line {csv_line} ({edm_relative_path}): {error}"
+                f"Failed to process CSV line "
+                f"{csv_line} ({edm_relative_path}): {error}"
             ) from error
 
         if expected_matrix_shape is None:
             expected_matrix_shape = edm.shape
+
         elif edm.shape != expected_matrix_shape:
             raise ValueError(
-                f"Inconsistent EDM shape on CSV line {csv_line}: "
-                f"expected {expected_matrix_shape}, got {edm.shape}"
+                f"Inconsistent EDM shape on CSV line "
+                f"{csv_line}: expected "
+                f"{expected_matrix_shape}, got {edm.shape}"
             )
 
-        raw_features.append(vectorize_upper_triangle(edm))
-        normalized_features.append(vectorize_upper_triangle(normalize_edm(edm)))
-        labels.append(class_to_index[class_name])
+        raw_features.append(
+            vectorize_upper_triangle(edm)
+        )
+
+        normalized_features.append(
+            vectorize_upper_triangle(
+                normalize_edm(edm)
+            )
+        )
+
+        # ONLY the movement name becomes the label.
+        labels.append(
+            class_to_index[class_name]
+        )
+
         image_paths.append(image_path)
         edm_paths.append(edm_relative_path)
-        person_ids.append(row["person_id"])
-        group_ids.append(row["group_id"])
 
-    X_raw = np.stack(raw_features).astype(np.float32, copy=False)
-    X_normalized = np.stack(normalized_features).astype(np.float32, copy=False)
-    y = np.asarray(labels, dtype=np.int64)
+        sides.append(side)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+        person_ids.append(
+            row["person_id"]
+        )
+
+        group_ids.append(
+            row["group_id"]
+        )
+
+    X_raw = np.stack(
+        raw_features
+    ).astype(
+        np.float32,
+        copy=False,
+    )
+
+    X_normalized = np.stack(
+        normalized_features
+    ).astype(
+        np.float32,
+        copy=False,
+    )
+
+    y = np.asarray(
+        labels,
+        dtype=np.int64,
+    )
+
+    output_path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
     np.savez_compressed(
         output_path,
-        # X defaults to normalized features for convenient use by later scripts.
+
+        # Normalized EDM features are used by default.
         X=X_normalized,
+
         X_raw=X_raw,
         X_normalized=X_normalized,
+
         y=y,
-        paths=np.asarray(image_paths, dtype=str),
-        edm_paths=np.asarray(edm_paths, dtype=str),
-        class_names=np.asarray(class_names, dtype=str),
-        person_ids=np.asarray(person_ids, dtype=str),
-        groups=np.asarray(group_ids, dtype=str),
+
+        paths=np.asarray(
+            image_paths,
+            dtype=str,
+        ),
+
+        edm_paths=np.asarray(
+            edm_paths,
+            dtype=str,
+        ),
+
+        class_names=np.asarray(
+            class_names,
+            dtype=str,
+        ),
+
+        # Kept only as metadata.
+        # This is NOT used as part of y.
+        sides=np.asarray(
+            sides,
+            dtype=str,
+        ),
+
+        person_ids=np.asarray(
+            person_ids,
+            dtype=str,
+        ),
+
+        groups=np.asarray(
+            group_ids,
+            dtype=str,
+        ),
     )
 
     print(f"Created: {output_path}")
+
     print(f"Samples: {len(y)}")
-    print(f"EDM shape: {expected_matrix_shape}")
-    print(f"Feature shape: {X_raw.shape}")
-    print(f"NaN values: {int(np.isnan(X_raw).sum())}")
+
+    print(
+        f"EDM shape: "
+        f"{expected_matrix_shape}"
+    )
+
+    print(
+        f"Feature shape: "
+        f"{X_raw.shape}"
+    )
+
+    print(
+        f"NaN values: "
+        f"{int(np.isnan(X_raw).sum())}"
+    )
+
     print("\nClass mapping and counts:")
 
-    counts = Counter(y.tolist())
-    for class_index, class_name in enumerate(class_names):
-        print(f"  {class_index}: {class_name}: {counts[class_index]}")
+    counts = Counter(
+        y.tolist()
+    )
 
-    empty_people = sum(not value for value in person_ids)
-    empty_groups = sum(not value for value in group_ids)
+    for class_index, class_name in enumerate(class_names):
+        print(
+            f"  {class_index}: "
+            f"{class_name}: "
+            f"{counts[class_index]}"
+        )
+
+    print("\nSide counts:")
+
+    side_counts = Counter(
+        sides
+    )
+
+    for side, count in sorted(side_counts.items()):
+        print(
+            f"  {side}: {count}"
+        )
+
+    empty_people = sum(
+        not value
+        for value in person_ids
+    )
+
+    empty_groups = sum(
+        not value
+        for value in group_ids
+    )
+
     if empty_people or empty_groups:
         print("\nMetadata warnings:")
-        print(f"  Empty person_id values: {empty_people}")
-        print(f"  Empty group_id values: {empty_groups}")
+
+        print(
+            f"  Empty person_id values: "
+            f"{empty_people}"
+        )
+
+        print(
+            f"  Empty group_id values: "
+            f"{empty_groups}"
+        )
 
 
 if __name__ == "__main__":

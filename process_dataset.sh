@@ -3,7 +3,7 @@
 # Always run relative to the folder containing this script.
 cd "$(dirname "$0")" || exit 1
 
-for folder in train_karate_detection/dataset/*/; do
+for folder in train_karate_detection/mirrored/dataset/*/; do
     echo "========================================"
     echo "Processing: $folder"
     echo "========================================"
