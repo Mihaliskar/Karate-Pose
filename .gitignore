@@ -34,5 +34,7 @@ venv/
 data
 dataset
 testing
-train_karate_detection/dataset/
-train_karate_detection/edms/
+train_karate_detection/normal/dataset/
+train_karate_detection/normal/edms/
+train_karate_detection/mirrored/dataset/
+train_karate_detection/mirrored/edms/
