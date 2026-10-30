@@ -83,6 +83,36 @@ def save_results(type, name, y, predictions, accuracy, macro_f1, class_names, ou
         results_file.write("Classification report:\n")
         results_file.write(report)
 
+def save_image_predictions(split_name, features, y, predictions, class_names, output_directory):
+    output_directory.mkdir(parents=True, exist_ok=True)
+
+    indices = np.load(f"splits/{split_name}_indices.npy")
+    image_paths = features["paths"][indices]
+
+    results = pd.DataFrame({
+        "sample_index": indices,
+        "image_path": image_paths,
+        "true_label": y,
+        "predicted_label": predictions,
+        "true_class": class_names[y],
+        "predicted_class": class_names[predictions],
+        "correct": y == predictions,
+    })
+
+    # Save every evaluated image.
+    results.to_csv(
+        output_directory / f"{split_name}_predictions.csv",
+        index=False,
+    )
+
+    # Save only incorrectly classified images.
+    mistakes = results[~results["correct"]]
+
+    mistakes.to_csv(
+        output_directory / f"{split_name}_misclassified.csv",
+        index=False,
+    )
+
 def save_confusion_matrix_csv(y, predictions, output_path):
     matrix = confusion_matrix(y, predictions)
 
@@ -181,7 +211,7 @@ def parse_arguments():
             "ovo_linear",
             "ovo_rbf",
         ],
-        required=True,
+        default="ovo_linear",
         help="Model type to train or test.",
     )
 
@@ -192,7 +222,18 @@ def parse_arguments():
         help="C value for the SVM. Default: 1.",
     )
 
-    return parser.parse_args()
+    parser.add_argument(
+        "--include-validation",
+        action="store_true",
+        help="Include the validation split in training. Requires --train.",
+    )
+
+    args = parser.parse_args()
+
+    if args.include_validation and not args.train:
+        parser.error("--include-validation requires --train.")
+
+    return args
 
 def main():
     args = parse_arguments()
@@ -239,27 +280,40 @@ def main():
             X_train, y_train = load_data("train", features)
             X_validation, y_validation = load_data("validation", features)
 
-            print(f"Starting training of {model_name} SVM")
-            model = train_model(strategy, kernel, c, X_train, y_train)
+            if (args.include_validation):
+                X_train = np.concatenate((X_train, X_validation),axis=0)
 
-            validation_predictions, validation_accuracy, validation_macro_f1 = evaluate_model(model, X_validation, y_validation)
+                y_train = np.concatenate((y_train, y_validation),axis=0)
+
+                print("Using training and validation splits for training.")
+
+            print(f"Training samples: {len(y_train)}")
+            print(f"Starting training of {model_name} SVM")
+
+            model = train_model(strategy,kernel,c,X_train,y_train)
 
             print("Training completed.")
-            print(f"Validation accuracy: {validation_accuracy:.4f}")
-            print(f"Validation macro F1: {validation_macro_f1:.4f}")
+            print("Saving Model")
 
-            print("Saving Model and Results")
-
-            print_detailed_results(y_validation, validation_predictions,class_names)
-            
             save_model(model, class_names, model_path)
 
-            save_results("validation", model_name, y_validation, validation_predictions, validation_accuracy, validation_macro_f1, class_names, output_directory)
-            
-            save_confusion_matrix_csv(y_validation, validation_predictions, output_directory / "validation_confusion_matrix.csv")
-            
-            save_confusion_matrix_heatmap(f"{model_name} SVM", "Validation", y_validation, validation_predictions, class_names, output_directory / "validation_confusion_matrix.png")
+            # Evaluate validation only when it was excluded from training.
+            if not args.include_validation:
+                validation_predictions, validation_accuracy, validation_macro_f1 = (evaluate_model(model, X_validation, y_validation))
 
+                print(f"Validation accuracy: {validation_accuracy:.4f}")
+                print(f"Validation macro F1: {validation_macro_f1:.4f}")
+                print("Saving Validation Results")
+
+                print_detailed_results(y_validation, validation_predictions, class_names)
+
+                save_results("validation", model_name, y_validation, validation_predictions, validation_accuracy, validation_macro_f1, class_names, output_directory)
+
+                save_image_predictions("validation", features, y_validation, validation_predictions, class_names, output_directory)
+
+                save_confusion_matrix_csv(y_validation, validation_predictions, output_directory / "validation_confusion_matrix.csv")
+
+                save_confusion_matrix_heatmap(f"{model_name} SVM", "Validation", y_validation, validation_predictions, class_names, output_directory / "validation_confusion_matrix.png")
         if (test):
             print("Starting Model Testing")
             X_test, y_test = load_data("test", features)
@@ -278,6 +332,8 @@ def main():
             print("Saving Testing Results")
 
             save_results("test", model_name, y_test, test_predictions, test_accuracy, test_macro_f1, class_names, output_directory)
+
+            save_image_predictions("test",features,y_test,test_predictions,loaded_class_names,output_directory)
 
             save_confusion_matrix_csv(y_test, test_predictions, output_directory / "test_confusion_matrix.csv")
             

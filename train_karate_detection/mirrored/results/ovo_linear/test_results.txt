@@ -1,0 +1,16 @@
+OVO Linear
+========================
+test accuracy: 0.8938
+test macro F1: 0.8916
+
+Classification report:
+              precision    recall  f1-score   support
+
+     age_uke     1.0000    1.0000    1.0000        29
+ gedan_barai     0.9333    1.0000    0.9655        28
+     oi_zuki     0.8750    0.7500    0.8077        28
+   shoto_uke     0.7667    0.8214    0.7931        28
+
+    accuracy                         0.8938       113
+   macro avg     0.8938    0.8929    0.8916       113
+weighted avg     0.8947    0.8938    0.8925       113

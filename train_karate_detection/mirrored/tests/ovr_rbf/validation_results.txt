@@ -1,0 +1,16 @@
+OVR RBF
+========================
+validation accuracy: 0.7699
+validation macro F1: 0.7106
+
+Classification report:
+              precision    recall  f1-score   support
+
+     age_uke     0.7250    1.0000    0.8406        29
+ gedan_barai     1.0000    0.9286    0.9630        28
+     oi_zuki     1.0000    0.1429    0.2500        28
+   shoto_uke     0.6512    1.0000    0.7887        28
+
+    accuracy                         0.7699       113
+   macro avg     0.8440    0.7679    0.7106       113
+weighted avg     0.8430    0.7699    0.7117       113
